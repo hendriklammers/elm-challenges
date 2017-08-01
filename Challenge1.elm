@@ -61,7 +61,10 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Mouse.moves MouseMove
+    Sub.batch
+        [ Mouse.moves MouseMove
+        , Window.resizes WindowResize
+        ]
 
 
 
@@ -70,7 +73,22 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    viewText model.label
+    div []
+        [ viewText model.label
+        , div [ style dividerStyle ] []
+        ]
+
+
+dividerStyle : List ( String, String )
+dividerStyle =
+    [ ( "position", "fixed" )
+    , ( "left", "50%" )
+    , ( "top", "0" )
+    , ( "width", "2px" )
+    , ( "height", "100%" )
+    , ( "background", "#000" )
+    , ( "transform", "translateX(-50%)" )
+    ]
 
 
 containerStyle : List ( String, String )
