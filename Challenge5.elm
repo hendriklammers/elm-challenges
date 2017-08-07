@@ -2,7 +2,7 @@ module Challenge5 exposing (..)
 
 import Html exposing (..)
 import Html.Attributes as H
-import Svg exposing (Svg, svg, rect, g)
+import Svg exposing (Svg, svg, circle, rect, g)
 import Svg.Attributes as S
 import Time
 import Keyboard
@@ -26,7 +26,7 @@ initialModel =
     , grid = Grid 20 20 25
     , snake = [ Position 1 1 ]
     , food = Position 8 8
-    , direction = Right
+    , direction = Rest
     , speed = 200
     , state = Pause
     }
@@ -66,6 +66,7 @@ type Direction
     | Down
     | Left
     | Right
+    | Rest
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -182,10 +183,16 @@ updatePosition dir pos =
         Left ->
             { pos | x = pos.x - 1 }
 
+        Rest ->
+            pos
+
 
 randomPosition : Grid -> Random.Generator Position
 randomPosition { columns, rows } =
-    Random.map2 Position (Random.int 0 <| columns - 1) (Random.int 0 <| rows - 1)
+    Random.map2
+        Position
+        (Random.int 0 <| columns - 1)
+        (Random.int 0 <| rows - 1)
 
 
 subscriptions : Model -> Sub Msg
@@ -203,6 +210,22 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
+    div
+        [ H.style containerStyle ]
+        [ viewGame model ]
+
+
+containerStyle : List ( String, String )
+containerStyle =
+    [ ( "display", "flex" )
+    , ( "justify-content", "center" )
+    , ( "align-items", "center" )
+    , ( "height", "100%" )
+    ]
+
+
+viewGame : Model -> Html Msg
+viewGame model =
     let
         width =
             toString (model.grid.columns * model.grid.size)
@@ -210,7 +233,8 @@ view model =
         height =
             toString (model.grid.rows * model.grid.size)
     in
-        div [ H.style [ ( "position", "relative" ) ] ]
+        div
+            [ H.class "game", H.style [ ( "position", "relative" ) ] ]
             [ svg
                 [ S.width width
                 , S.height height
@@ -226,7 +250,7 @@ view model =
 
 viewScore : Model -> Html Msg
 viewScore { score, state } =
-    if state /= Play then
+    if state == GameOver then
         div [ H.style scoreStyle ]
             [ text <| toString score ]
     else
@@ -244,14 +268,17 @@ scoreStyle =
 
 viewFood : Model -> Svg Msg
 viewFood { food, grid } =
-    rect
-        [ S.width <| toString grid.size
-        , S.height <| toString grid.size
-        , S.fill "#00c"
-        , S.x <| toString <| food.x * grid.size
-        , S.y <| toString <| food.y * grid.size
-        ]
-        []
+    let
+        radius =
+            (toFloat grid.size) / 2
+    in
+        circle
+            [ S.r <| toString radius
+            , S.fill "#00c"
+            , S.cx <| toString <| food.x * grid.size + (round radius)
+            , S.cy <| toString <| food.y * grid.size + (round radius)
+            ]
+            []
 
 
 viewBackground : String -> String -> Svg Msg
