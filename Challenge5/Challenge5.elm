@@ -2,7 +2,7 @@ module Challenge5 exposing (..)
 
 import Html exposing (..)
 import Html.Attributes as H
-import Svg exposing (Svg, svg, circle, rect, g)
+import Svg exposing (Svg, svg, circle, rect, g, pattern, defs)
 import Svg.Attributes as S
 import Time
 import Keyboard
@@ -23,11 +23,11 @@ type alias Model =
 initialModel : Model
 initialModel =
     { score = 0
-    , grid = Grid 20 20 25
+    , grid = Grid 20 20 30
     , snake = [ Position 1 1 ]
     , food = Position 8 8
-    , direction = Rest
-    , speed = 200
+    , direction = Right
+    , speed = 150
     , state = Pause
     }
 
@@ -66,7 +66,6 @@ type Direction
     | Down
     | Left
     | Right
-    | Rest
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -79,7 +78,10 @@ update msg model =
             handleKeyPress char model ! []
 
         Food position ->
-            { model | food = position } ! []
+            if List.member position model.snake then
+                ( model, Random.generate Food (randomPosition model.grid) )
+            else
+                { model | food = position } ! []
 
 
 handleKeyPress : Int -> Model -> Model
@@ -183,9 +185,6 @@ updatePosition dir pos =
         Left ->
             { pos | x = pos.x - 1 }
 
-        Rest ->
-            pos
-
 
 randomPosition : Grid -> Random.Generator Position
 randomPosition { columns, rows } =
@@ -274,21 +273,78 @@ viewFood { food, grid } =
     in
         circle
             [ S.r <| toString radius
-            , S.fill "#00c"
+            , S.fill "#D2FB78"
             , S.cx <| toString <| food.x * grid.size + (round radius)
             , S.cy <| toString <| food.y * grid.size + (round radius)
             ]
             []
 
 
+checkerboard : Svg Msg
+checkerboard =
+    let
+        color1 =
+            "#49496A"
+
+        color2 =
+            "#42425F"
+    in
+        pattern
+            [ S.id "checkerboard"
+            , S.x "0"
+            , S.y "0"
+            , S.width "60"
+            , S.height "60"
+            , S.patternUnits "userSpaceOnUse"
+            ]
+            [ rect
+                [ S.x "0"
+                , S.y "0"
+                , S.width "30"
+                , S.height "30"
+                , S.fill color1
+                ]
+                []
+            , rect
+                [ S.x "30"
+                , S.y "0"
+                , S.width "30"
+                , S.height "30"
+                , S.fill color2
+                ]
+                []
+            , rect
+                [ S.x "30"
+                , S.y "30"
+                , S.width "30"
+                , S.height "30"
+                , S.fill color1
+                ]
+                []
+            , rect
+                [ S.x "0"
+                , S.y "30"
+                , S.width "30"
+                , S.height "30"
+                , S.fill color2
+                ]
+                []
+            ]
+
+
 viewBackground : String -> String -> Svg Msg
 viewBackground width height =
-    rect
-        [ S.width width
-        , S.height height
-        , S.fill "#eee"
+    g []
+        [ defs
+            []
+            [ checkerboard ]
+        , rect
+            [ S.width width
+            , S.height height
+            , S.fill "url(#checkerboard)"
+            ]
+            []
         ]
-        []
 
 
 viewSnake : Snake -> Int -> Svg Msg
@@ -300,7 +356,7 @@ viewSnake positions size =
                 , S.y <| toString <| y * size
                 , S.width <| toString size
                 , S.height <| toString size
-                , S.fill "#c00"
+                , S.fill "#49CDF6"
                 ]
                 []
     in
