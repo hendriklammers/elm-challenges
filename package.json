@@ -1,0 +1,14 @@
+{
+  "name": "elm-challenges",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:hendriklammers/elm-challenges.git",
+  "author": "Hendrik Lammers <lammers@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "elm-live": "^2.7.5"
+  },
+  "scripts": {
+    "start": "elm-live Challenge5/Challenge5.elm --output=Challenge5/elm.js --dir=Challenge5 --pushstate --open"
+  }
+}
