@@ -190,8 +190,8 @@ randomPosition : Grid -> Random.Generator Position
 randomPosition { columns, rows } =
     Random.map2
         Position
-        (Random.int 0 <| columns - 1)
-        (Random.int 0 <| rows - 1)
+        (Random.int 1 <| columns - 2)
+        (Random.int 1 <| rows - 2)
 
 
 subscriptions : Model -> Sub Msg
