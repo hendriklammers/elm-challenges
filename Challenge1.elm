@@ -14,6 +14,7 @@ import Window exposing (Size)
 type alias Model =
     { label : String
     , windowSize : Size
+    , background : String
     }
 
 
@@ -21,6 +22,7 @@ initialModel : Model
 initialModel =
     { label = ""
     , windowSize = Size 0 0
+    , background = "#000"
     }
 
 
@@ -51,8 +53,14 @@ update msg model =
                         "left"
                     else
                         "right"
+
+                background =
+                    if label == "left" then
+                        "#CE1C4F"
+                    else
+                        "#3E4DCF"
             in
-                ( { model | label = label }, Cmd.none )
+                ( { model | label = label, background = background }, Cmd.none )
 
 
 
@@ -73,21 +81,25 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ viewText model.label
-        , div [ style dividerStyle ] []
+    div [ style [ ( "height", "100vh" ) ] ]
+        [ viewBackground model
+        , viewText model.label
         ]
 
 
-dividerStyle : List ( String, String )
-dividerStyle =
-    [ ( "position", "fixed" )
-    , ( "left", "50%" )
-    , ( "top", "0" )
-    , ( "width", "2px" )
+viewBackground : Model -> Html Msg
+viewBackground { background } =
+    div
+        [ style (( "background", background ) :: backgroundStyle) ]
+        [ text "" ]
+
+
+backgroundStyle : List ( String, String )
+backgroundStyle =
+    [ ( "position", "absolute" )
+    , ( "width", "100%" )
     , ( "height", "100%" )
-    , ( "background", "#000" )
-    , ( "transform", "translateX(-50%)" )
+    , ( "transition", "background 0.2s ease-out" )
     ]
 
 
@@ -103,7 +115,8 @@ containerStyle =
 textStyle : List ( String, String )
 textStyle =
     [ ( "margin", "0" )
-    , ( "font", "bold 24px Helvetica, sans-serif" )
+    , ( "font", "bold 48px Helvetica, sans-serif" )
+    , ( "color", "#fff" )
     ]
 
 
