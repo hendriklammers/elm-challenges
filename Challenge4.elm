@@ -19,7 +19,8 @@ import Http
 import Process
 import Task
 import Time
-import String exposing (length)
+import String exposing (length, join)
+import Set exposing (Set)
 
 
 -- Model
@@ -33,7 +34,7 @@ type UserData
 
 
 type alias Model =
-    { term : String
+    { username : String
     , debounceCount : Int
     , user : UserData
     }
@@ -45,7 +46,12 @@ type alias User =
     , url : String
     , name : Maybe String
     , bio : Maybe String
+    , languages : Set String
     }
+
+
+type alias Repo =
+    { language : Maybe String }
 
 
 init : ( Model, Cmd Msg )
@@ -72,22 +78,22 @@ debounceCmd count =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Input term ->
+        Input username ->
             let
                 count =
                     model.debounceCount + 1
             in
-                ( { model | term = term, debounceCount = count }
+                ( { model | username = username, debounceCount = count }
                 , debounceCmd count
                 )
 
         Timeout count ->
             if count == model.debounceCount then
-                if length model.term < 1 then
+                if length model.username < 1 then
                     { model | debounceCount = 0, user = NotAsked } ! []
                 else
                     ( { model | debounceCount = 0, user = Loading }
-                    , fetchUser model.term
+                    , fetchData model.username
                     )
             else
                 model ! []
@@ -105,27 +111,58 @@ update msg model =
                     { model | user = Success user } ! []
 
 
-fetchUser : String -> Cmd Msg
-fetchUser term =
+fetchData : String -> Cmd Msg
+fetchData username =
     let
-        url =
-            "https://api.github.com/users/" ++ term
+        userUrl =
+            "https://api.github.com/users/" ++ username
 
-        request =
-            Http.get url userDecoder
+        reposUrl =
+            "https://api.github.com/users/" ++ username ++ "/repos"
     in
-        Http.send NewData request
+        Task.attempt NewData <|
+            Task.map2 applyLanguages
+                (Http.get userUrl userDecoder |> Http.toTask)
+                (Http.get reposUrl repoListDecoder |> Http.toTask)
+
+
+applyLanguages : User -> List Repo -> User
+applyLanguages user repos =
+    let
+        reducer repo ls =
+            case repo.language of
+                Nothing ->
+                    ls
+
+                Just language ->
+                    language :: ls
+
+        languages =
+            List.foldl reducer [] repos
+    in
+        { user | languages = Set.fromList languages }
 
 
 userDecoder : Decode.Decoder User
 userDecoder =
-    Decode.map5
+    Decode.map6
         User
         (Decode.field "login" Decode.string)
         (Decode.field "avatar_url" Decode.string)
         (Decode.field "html_url" Decode.string)
         (Decode.field "name" (Decode.maybe Decode.string))
         (Decode.field "bio" (Decode.maybe Decode.string))
+        (Decode.succeed Set.empty)
+
+
+repoDecoder : Decode.Decoder Repo
+repoDecoder =
+    Decode.map Repo (Decode.field "language" (Decode.maybe Decode.string))
+
+
+repoListDecoder : Decode.Decoder (List Repo)
+repoListDecoder =
+    Decode.list repoDecoder
 
 
 
@@ -186,15 +223,33 @@ viewUser user =
                 [ text user.login ]
             , viewUserProp "User" user.name
             , viewUserProp "Bio" user.bio
+            , viewLanguages user.languages
             ]
         ]
+
+
+viewLanguages : Set String -> Html Msg
+viewLanguages languages =
+    let
+        str =
+            if not <| Set.isEmpty languages then
+                Set.foldl (\curr acc -> curr ++ ", " ++ acc) "" languages
+                    |> Just
+            else
+                Nothing
+    in
+        viewUserProp "Languages" str
 
 
 viewLabel : String -> String -> Html Msg
 viewLabel label value =
     div [ H.style [ ( "margin", "6px 0" ) ] ]
         [ span
-            [ H.style [ ( "font-style", "italic" ), ( "margin-right", "5px" ) ] ]
+            [ H.style
+                [ ( "font-style", "italic" )
+                , ( "margin-right", "5px" )
+                ]
+            ]
             [ text (label ++ ":") ]
         , span
             []
