@@ -2,6 +2,7 @@ module Challenge5 exposing (..)
 
 import Html exposing (..)
 import Html.Attributes as H
+import Html.Events exposing (onClick)
 import Svg exposing (Svg, svg, circle, rect, g, pattern, defs)
 import Svg.Attributes as S
 import Time
@@ -28,7 +29,7 @@ initialModel =
     , food = Position 8 8
     , direction = Right
     , speed = 150
-    , state = Pause
+    , state = Start
     }
 
 
@@ -36,10 +37,11 @@ type Msg
     = Tick Time.Time
     | KeyPress Int
     | Food Position
+    | StartGame
 
 
 type State
-    = Pause
+    = Start
     | Play
     | GameOver
 
@@ -76,6 +78,9 @@ update msg model =
 
         KeyPress char ->
             handleKeyPress char model ! []
+
+        StartGame ->
+            { initialModel | state = Play } ! []
 
         Food position ->
             if List.member position model.snake then
@@ -114,17 +119,6 @@ handleKeyPress char model =
                 { model | direction = Down }
             else
                 model
-
-        -- Space
-        32 ->
-            let
-                newState =
-                    if model.state == Pause then
-                        Play
-                    else
-                        Pause
-            in
-                { model | state = newState }
 
         _ ->
             model
@@ -209,18 +203,7 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div
-        [ H.style containerStyle ]
-        [ viewGame model ]
-
-
-containerStyle : List ( String, String )
-containerStyle =
-    [ ( "display", "flex" )
-    , ( "justify-content", "center" )
-    , ( "align-items", "center" )
-    , ( "height", "100%" )
-    ]
+    viewGame model
 
 
 viewGame : Model -> Html Msg
@@ -233,7 +216,7 @@ viewGame model =
             toString (model.grid.rows * model.grid.size)
     in
         div
-            [ H.class "game", H.style [ ( "position", "relative" ) ] ]
+            [ H.class "game" ]
             [ svg
                 [ S.width width
                 , S.height height
@@ -241,43 +224,62 @@ viewGame model =
                 ]
                 [ viewBackground width height
                 , viewFood model
-                , viewSnake model.snake model.grid.size
+                , viewSnake model
                 ]
-            , viewScore model
+            , viewStart model
+            , viewGameOver model
             ]
+
+
+viewGameOver : Model -> Html Msg
+viewGameOver { state } =
+    if state == GameOver then
+        div [ H.class "gameover" ]
+            [ button
+                [ H.class "button gameover__button", onClick StartGame ]
+                [ text "Play Again" ]
+            ]
+    else
+        text ""
+
+
+viewStart : Model -> Html Msg
+viewStart { state } =
+    if state == Start then
+        div [ H.class "start" ]
+            [ button
+                [ H.class "button start__button", onClick StartGame ]
+                [ text "Start Game" ]
+            ]
+    else
+        text ""
 
 
 viewScore : Model -> Html Msg
 viewScore { score, state } =
     if state == GameOver then
-        div [ H.style scoreStyle ]
+        div [ H.class "score" ]
             [ text <| toString score ]
     else
         text ""
 
 
-scoreStyle : List ( String, String )
-scoreStyle =
-    [ ( "position", "absolute" )
-    , ( "left", "10px" )
-    , ( "top", "10px" )
-    , ( "font", "21px Arial, sans-serif" )
-    ]
-
-
 viewFood : Model -> Svg Msg
-viewFood { food, grid } =
+viewFood { food, grid, state } =
     let
         radius =
             (toFloat grid.size) / 2
     in
-        circle
-            [ S.r <| toString radius
-            , S.fill "#D2FB78"
-            , S.cx <| toString <| food.x * grid.size + (round radius)
-            , S.cy <| toString <| food.y * grid.size + (round radius)
-            ]
-            []
+        if state == Play then
+            circle
+                [ S.r <| toString radius
+                , S.fill "#D2FB78"
+                , S.cx <| toString <| food.x * grid.size + (round radius)
+                , S.cy <| toString <| food.y * grid.size + (round radius)
+                ]
+                []
+        else
+            Svg.text ""
 
 
 checkerboard : Svg Msg
@@ -347,21 +349,24 @@ viewBackground width height =
         ]
 
 
-viewSnake : Snake -> Int -> Svg Msg
-viewSnake positions size =
+viewSnake : Model -> Svg Msg
+viewSnake { snake, grid, state } =
     let
         viewRect { x, y } =
             rect
-                [ S.x <| toString <| x * size
-                , S.y <| toString <| y * size
-                , S.width <| toString size
-                , S.height <| toString size
+                [ S.x <| toString <| x * grid.size
+                , S.y <| toString <| y * grid.size
+                , S.width <| toString grid.size
+                , S.height <| toString grid.size
                 , S.fill "#49CDF6"
                 ]
                 []
     in
-        g []
-            (List.map viewRect positions)
+        if state == Play then
+            g []
+                (List.map viewRect snake)
+        else
+            Svg.text ""
 
 
 main : Program Never Model Msg
