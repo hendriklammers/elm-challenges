@@ -9,6 +9,6 @@
     "elm-live": "^2.7.5"
   },
   "scripts": {
-    "start": "elm-live Challenge5/Challenge5.elm --output=Challenge5/elm.js --dir=Challenge5 --pushstate --open --debug"
+    "challenge5": "elm-live Challenge5/Challenge5.elm --output=Challenge5/elm.js --dir=Challenge5 --pushstate --open --debug"
   }
 }
