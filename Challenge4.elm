@@ -12,6 +12,8 @@ import Html
         , program
         , span
         , text
+        , ul
+        , li
         )
 import Html.Attributes as H
 import Html.Events exposing (onInput)
@@ -231,14 +233,28 @@ viewUser user =
 viewLanguages : Set String -> Html Msg
 viewLanguages languages =
     let
-        str =
-            if not <| Set.isEmpty languages then
-                Set.foldl (\curr acc -> curr ++ ", " ++ acc) "" languages
-                    |> Just
-            else
-                Nothing
+        items =
+            Set.foldl (\curr acc -> (li [] [ text curr ]) :: acc) [] languages
     in
-        viewUserProp "Languages" str
+        div [ H.style [ ( "margin", "6px 0" ) ] ]
+            [ span
+                [ H.style
+                    [ ( "font-style", "italic" )
+                    , ( "margin-right", "5px" )
+                    ]
+                ]
+                [ text "Languages:" ]
+            , ul
+                [ H.style
+                    [ ( "display", "inline-block" )
+                    , ( "list-style", "none" )
+                    , ( "margin", "0 0 0 2px" )
+                    , ( "padding", "0" )
+                    , ( "vertical-align", "top" )
+                    ]
+                ]
+                items
+            ]
 
 
 viewLabel : String -> String -> Html Msg
