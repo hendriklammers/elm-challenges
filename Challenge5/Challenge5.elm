@@ -12,6 +12,7 @@ import Random
 
 type alias Model =
     { score : Int
+    , highScore : Int
     , grid : Grid
     , snake : Snake
     , food : Position
@@ -24,6 +25,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { score = 0
+    , highScore = 0
     , grid = Grid 20 20 30
     , snake = [ Position 1 1 ]
     , food = Position 8 8
@@ -232,15 +234,36 @@ viewGame model =
 
 
 viewGameOver : Model -> Html Msg
-viewGameOver { state } =
+viewGameOver { state, score, highScore } =
     if state == GameOver then
         div [ H.class "gameover" ]
-            [ button
+            [ h1 [ H.class "gameover__title" ]
+                [ text "Game Over" ]
+            , viewScore score highScore
+            , button
                 [ H.class "button gameover__button", onClick StartGame ]
                 [ text "Play Again" ]
             ]
     else
         text ""
+
+
+viewScore : Int -> Int -> Html Msg
+viewScore score highScore =
+    div [ H.class "score" ]
+        [ div [ H.class "score__container" ]
+            [ text "Your score: "
+            , span
+                [ H.class "score__value" ]
+                [ text <| toString score ]
+            ]
+        , div [ H.class "score__container" ]
+            [ text "Highscore: "
+            , span
+                [ H.class "score__value" ]
+                [ text <| toString highScore ]
+            ]
+        ]
 
 
 viewStart : Model -> Html Msg
@@ -251,15 +274,6 @@ viewStart { state } =
                 [ H.class "button start__button", onClick StartGame ]
                 [ text "Start Game" ]
             ]
-    else
-        text ""
-
-
-viewScore : Model -> Html Msg
-viewScore { score, state } =
-    if state == GameOver then
-        div [ H.class "score" ]
-            [ text <| toString score ]
     else
         text ""
 
