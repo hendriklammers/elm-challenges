@@ -1,4 +1,4 @@
-module Challenge5 exposing (..)
+port module Challenge5 exposing (..)
 
 import Html exposing (..)
 import Html.Attributes as H
@@ -40,6 +40,7 @@ type Msg
     | KeyPress Int
     | Food Position
     | StartGame
+    | HighScore Int
 
 
 type State
@@ -72,6 +73,9 @@ type Direction
     | Right
 
 
+port sendScore : Int -> Cmd msg
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -89,6 +93,9 @@ update msg model =
                 ( model, Random.generate Food (randomPosition model.grid) )
             else
                 { model | food = position } ! []
+
+        HighScore score ->
+            { model | highScore = score } ! []
 
 
 handleKeyPress : Int -> Model -> Model
@@ -147,7 +154,7 @@ updateGame model =
             head :: tail
     in
         if wallCollision head model.grid || tailCollision head tail then
-            { model | state = GameOver } ! []
+            ( { model | state = GameOver }, sendScore model.score )
         else if head == model.food then
             ( { model | snake = snake, score = model.score + 1 }
             , Random.generate Food (randomPosition model.grid)
@@ -190,6 +197,9 @@ randomPosition { columns, rows } =
         (Random.int 1 <| rows - 2)
 
 
+port getHighscore : (Int -> msg) -> Sub msg
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.state of
@@ -197,10 +207,14 @@ subscriptions model =
             Sub.batch
                 [ Time.every (model.speed * Time.millisecond) Tick
                 , Keyboard.downs (\keycode -> KeyPress keycode)
+                , getHighscore HighScore
                 ]
 
         _ ->
-            Keyboard.downs (\keycode -> KeyPress keycode)
+            Sub.batch
+                [ Keyboard.downs (\keycode -> KeyPress keycode)
+                , getHighscore HighScore
+                ]
 
 
 view : Model -> Html Msg
