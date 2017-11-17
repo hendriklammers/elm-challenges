@@ -15,7 +15,7 @@ body {
   height: 100vh;
   background: #000;
   color: #fff;
-  font-family: 'Press Start 2P', cursive;
+  font-family: 'Press Start 2P', Arial, sans-serif;
 }
 
 .container {
@@ -31,11 +31,11 @@ body {
   padding: 0;
   -webkit-appearance: none;
   border: none;
-  font-family: 'Press Start 2P', cursive;
+  font-family: 'Press Start 2P', Arial, sans-serif;
   font-size: 16px;
   background: none;
-  color: #fff;
   cursor: pointer;
+  color: #d2fb78;
 }
 
 .start {
@@ -63,7 +63,7 @@ body {
 
 .gameover__title {
   margin: 0 0 24px;
-  color: #d2fb78;
+  color: #49cdf6;
   font-size: 32px;
 }
 
