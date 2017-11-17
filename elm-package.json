@@ -5,7 +5,7 @@
     "license": "BSD3",
     "source-directories": [
         ".",
-        "Challenge5"
+        "Challenge5-6"
     ],
     "exposed-modules": [],
     "dependencies": {
