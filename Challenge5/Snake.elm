@@ -1,4 +1,12 @@
-port module Challenge5 exposing (..)
+module Snake
+    exposing
+        ( Msg
+        , Model
+        , initialModel
+        , subscriptions
+        , view
+        , update
+        )
 
 import Html exposing (..)
 import Html.Attributes as H
@@ -8,6 +16,7 @@ import Svg.Attributes as S
 import Time
 import Keyboard
 import Random
+import Score
 
 
 type alias Model =
@@ -71,9 +80,6 @@ type Direction
     | Down
     | Left
     | Right
-
-
-port sendScore : Int -> Cmd msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -154,7 +160,7 @@ updateGame model =
             head :: tail
     in
         if wallCollision head model.grid || tailCollision head tail then
-            ( { model | state = GameOver }, sendScore model.score )
+            ( { model | state = GameOver }, Score.sendScore model.score )
         else if head == model.food then
             ( { model | snake = snake, score = model.score + 1 }
             , Random.generate Food (randomPosition model.grid)
@@ -197,9 +203,6 @@ randomPosition { columns, rows } =
         (Random.int 1 <| rows - 2)
 
 
-port getHighscore : (Int -> msg) -> Sub msg
-
-
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.state of
@@ -207,13 +210,13 @@ subscriptions model =
             Sub.batch
                 [ Time.every (model.speed * Time.millisecond) Tick
                 , Keyboard.downs (\keycode -> KeyPress keycode)
-                , getHighscore HighScore
+                , Score.getScore HighScore
                 ]
 
         _ ->
             Sub.batch
                 [ Keyboard.downs (\keycode -> KeyPress keycode)
-                , getHighscore HighScore
+                , Score.getScore HighScore
                 ]
 
 
@@ -253,31 +256,13 @@ viewGameOver { state, score, highScore } =
         div [ H.class "gameover" ]
             [ h1 [ H.class "gameover__title" ]
                 [ text "Game Over" ]
-            , viewScore score highScore
+            , Score.view score highScore
             , button
                 [ H.class "button gameover__button", onClick StartGame ]
                 [ text "Play Again" ]
             ]
     else
         text ""
-
-
-viewScore : Int -> Int -> Html Msg
-viewScore score highScore =
-    div [ H.class "score" ]
-        [ div [ H.class "score__container" ]
-            [ text "Your score: "
-            , span
-                [ H.class "score__value" ]
-                [ text <| toString score ]
-            ]
-        , div [ H.class "score__container" ]
-            [ text "Highscore: "
-            , span
-                [ H.class "score__value" ]
-                [ text <| toString highScore ]
-            ]
-        ]
 
 
 viewStart : Model -> Html Msg

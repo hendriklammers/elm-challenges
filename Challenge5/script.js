@@ -2,7 +2,7 @@
   'use strict'
 
   const container = document.querySelector("#container")
-  const app = window.Elm.Challenge5.embed(container)
+  const app = window.Elm.Main.embed(container)
   const storage = window.localStorage
 
   app.ports.sendScore.subscribe( score => {
@@ -11,7 +11,7 @@
       highscore = score
       storage.setItem('highscore', score)
     }
-    app.ports.getHighscore.send(parseInt(highscore))
+    app.ports.getScore.send(parseInt(highscore))
   })
 
 }())
